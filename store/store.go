@@ -71,6 +71,15 @@ func BuildManifest(r *revlog.Rec, fb *revlog.FileBuilder) (m Manifest, err error
 	return
 }
 
+// Create a map with filename keys from a list of manifest entries.
+func (list Manifest) Map() (m map[string]*ManifestEnt) {
+	m = make(map[string]*ManifestEnt, len(list))
+	for i, e := range list {
+		m[e.FileName] = &list[i]
+	}
+	return
+}
+
 type ManifestEnt struct {
 	FileName string
 	hash     string
