@@ -127,7 +127,7 @@ func runArchive(cmd *Command, w io.Writer, args []string) {
 				fatalf("%s", err)
 			}
 
-			w, err := a.createFile(name, mode, int64(r.FileLength)-int64(p.MetaLen), c.Date)
+			w, err := a.createFile(name, mode, int64(r.FileLength)-int64(len(p.MetaData)), c.Date)
 			if err != nil {
 				fatalf("%s", err)
 			}

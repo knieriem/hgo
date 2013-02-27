@@ -106,17 +106,28 @@ func (p *FileBuilder) PreparePatch(r *Rec) (f *FilePatch, err error) {
 			dc.Store(r.i, d)
 		}
 		if r.IsBase() {
-			skip := 0
-			if r == rsav && r.IsStartOfBranch() && len(d) > 2 {
-				if d[0] == '\001' && d[1] == '\n' {
-					if i := bytes.Index(d[2:], []byte{'\001', '\n'}); i != -1 {
-						skip = i + 4
-					}
+			f = new(FilePatch)
+			if rsav.IsStartOfBranch() {
+				if r == rsav {
+					// The normal case, rsav is a base revision, the
+					// meta header is at the top of the data
+					f.MetaData = scanMetaData(d)
+					f.MetaSkip = len(f.MetaData)
+				} else if len(prevPatch) > 0 {
+					prevPatch[0].Adjust(func(begin, _ int, data []byte) []byte {
+						if begin > 0 {
+							return data
+						}
+
+						// The rare case, rsav is an incremental revision, the
+						// meta header is at the top of the first hunk.
+						// Example: hgo revlog -r 1 $PLAN9/.hg/store/data/src/cmd/dd.c.i
+						f.MetaData = scanMetaData(data)
+						return data[len(f.MetaData):]
+					})
 				}
 			}
-			f = new(FilePatch)
 			f.baseData = d
-			f.MetaLen = skip
 			f.patch = prevPatch
 			f.rev = rsav
 			f.fb = p
@@ -137,6 +148,19 @@ func (p *FileBuilder) PreparePatch(r *Rec) (f *FilePatch, err error) {
 	}
 	panic("not reached")
 
+}
+
+func scanMetaData(d []byte) (meta []byte) {
+	if len(d) <= 4 {
+		return
+	}
+	if d[0] != '\001' || d[1] != '\n' {
+		return
+	}
+	if i := bytes.Index(d[2:], []byte{'\001', '\n'}); i != -1 {
+		meta = d[:i+4]
+	}
+	return
 }
 
 func (p *FileBuilder) BuildWrite(w io.Writer, r *Rec) (err error) {
@@ -163,8 +187,8 @@ type FilePatch struct {
 	baseData []byte
 	patch    []patch.Hunk
 
-	MetaData map[string]string
-	MetaLen  int
+	MetaData []byte
+	MetaSkip int
 }
 
 func (p *FilePatch) Apply(w io.Writer) (err error) {
@@ -181,14 +205,19 @@ func (p *FilePatch) Apply(w io.Writer) (err error) {
 	}
 
 	orig := p.baseData
-	n := 0
-	if p.MetaLen > 0 {
-		n, _ = h.Write(orig[:p.MetaLen])
+	skip := 0
+	nAdjust := 0
+	if len(p.MetaData) > 0 {
+		h.Write(p.MetaData)
+		skip = p.MetaSkip
+		nAdjust = len(p.MetaData) - skip
+
 	}
-	n, err = patch.Apply(io.MultiWriter(h, w), orig, n, p.patch)
+	n, err := patch.Apply(io.MultiWriter(h, w), orig, skip, p.patch)
 	if err != nil {
 		return
 	}
+	n += nAdjust
 
 	if n != int(r.FileLength) {
 		err = fmt.Errorf("revlog: length of computed file differs from the expected value: %d != %d", n, r.FileLength)

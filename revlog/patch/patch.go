@@ -32,6 +32,10 @@ func (h *Hunk) Dump(w io.Writer) {
 	fmt.Fprint(w, "\n")
 }
 
+func (h *Hunk) Adjust(f func(begin, end int, data []byte) []byte) {
+	h.data = f(h.begin, h.end, h.data)
+}
+
 // Parse converts a patch from its binary representation into a slice of Hunks.
 func Parse(data []byte) (hunks []Hunk, err error) {
 	var h Hunk
