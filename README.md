@@ -12,3 +12,9 @@ Hgo supports the following repository features:
 
 The Go packages have been implemented from scratch, based
 on information found in Mercurial's wiki.
+
+The project should be considered unstable. The BUGS file lists
+known issues yet to be addressed.
+
+cmd/hgo contains an example program that implements a few
+commands similar to a subset of Mercurial's hg.

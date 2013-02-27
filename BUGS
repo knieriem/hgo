@@ -1,0 +1,23 @@
+*	In rare cases, a meta header can be part of
+	non-base revisions too, like in case of plan9port's
+	src/cmd/dd.c. Here, file revision 1 contains copyrev
+	entries, but revision 0 is the base. The filebuilder
+	must be adjusted to recognize this case.
+
+	Example:
+		hgo revlog $PLAN9/.hg/store/data/src/cmd/dd.c.i
+		hgo cat -R $PLAN9 -r 2985 $PLAN9/src/cmd/dd.c | head
+
+
+*	The LinkRevSpec lookup algorithm may be wrong in case
+	the number of branches is greater than one:
+	The Go repository contains an example:
+
+		R=$GOROOT
+		hgo cat -R $R -r tip $R/doc/progs/eff_qr.go > /dev/null
+
+	It must be adjusted so that it does not return the wrong
+	filelog record.
+
+
+*	Packages, esp. revlog, needs documentation.
