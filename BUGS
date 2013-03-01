@@ -8,8 +8,4 @@
 	It must be adjusted so that it does not return the wrong
 	filelog record.
 
-*	store/casefolding.go does not properly encode paths ending in ".d"
-	Example:
-		hgo cat $GOROOT/misc/osx/etc/paths.d/go
-
 *	Packages, esp. revlog, needs documentation.

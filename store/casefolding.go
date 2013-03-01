@@ -59,7 +59,17 @@ func (e *filenameEncoder) Encode(orig string) (indexName, dataName string) {
 
 func (e *filenameEncoder) encodeSegment(b []byte, seg string, hashPreEncode bool) (result []byte, modified bool) {
 	n := len(seg)
-	if e.fncache && n >= 3 {
+	switch {
+	case !e.fncache:
+	case n > 2 && strings.HasSuffix(seg, ".d"):
+		// In various repositories, like golang's, it can be seen that ".d" gets
+		// translated into ".d.hg". There seems to be no documentation in
+		// Mercurial's wiki about that; for the nonce we encode .d for
+		// the fncache option.
+		seg += ".hg"
+		modified = true
+		n += 3
+	case n >= 3:
 		// check for some names reserved on MS-Windows
 		nres := 3
 		switch seg[:nres] {
