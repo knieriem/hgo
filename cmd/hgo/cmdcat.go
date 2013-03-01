@@ -20,6 +20,10 @@ func LookupFile(fileLog *revlog.Index, chgId int, manifestEntry func() (*store.M
 	if err != nil {
 		return
 	}
+	if r.FileRev() == -1 {
+		err = revlog.ErrRevisionNotFound
+		return
+	}
 
 	if int(r.Linkrev) == chgId {
 		// The requested revision matches this record, which can be
