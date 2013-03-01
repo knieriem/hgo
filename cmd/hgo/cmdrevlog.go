@@ -41,15 +41,17 @@ func runRevlog(cmd *Command, w io.Writer, args []string) {
 		fatalf("%s", err)
 	}
 	if !*revlogBuild {
-		if !r.IsBase() {
-			dh := &dataHelper{}
-			d, err := r.GetData(dh)
-			if dh.file != nil {
-				dh.file.Close()
-			}
-			if err != nil {
-				fatalf("%s", err)
-			}
+		dh := &dataHelper{}
+		d, err := r.GetData(dh)
+		if dh.file != nil {
+			dh.file.Close()
+		}
+		if err != nil {
+			fatalf("%s", err)
+		}
+		if r.IsBase() {
+			w.Write(d)
+		} else {
 			hunks, err := patch.Parse(d)
 			if err != nil {
 				fatalf("%s", err)
