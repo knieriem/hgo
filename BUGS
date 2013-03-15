@@ -1,13 +1,3 @@
-*	Meta headers. Apparently it can be the case that a
-	branch starting record may contain an incremental update
-	to only a part of a meta header. This requires reworking
-	the meta header processing in revlog/filebuilder:
-	Examples (files that don't have the meta header stripped):
-		f=test/fixedbugs/bug136.go
-		R=$GOROOT
-		hgo cat -R $R -r a0f4eb9797d7 $f
-		hgo revlog $R/.hg/store/data/$f.i
-
 *	The LinkRevSpec lookup algorithm may be wrong in case
 	the number of branches is greater than one:
 	The Go repository contains an example:

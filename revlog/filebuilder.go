@@ -33,6 +33,7 @@ type FileBuilder struct {
 	dataCache DataCache
 	data      dataHelper
 	fileBuf   bytes.Buffer
+	metaBuf   bytes.Buffer
 }
 
 func NewFileBuilder() (p *FileBuilder) {
@@ -110,21 +111,48 @@ func (p *FileBuilder) PreparePatch(r *Rec) (f *FilePatch, err error) {
 			if rsav.IsStartOfBranch() {
 				if r == rsav {
 					// The normal case, rsav is a base revision, the
-					// meta header is at the top of the data
+					// complete meta header is at the top of the data
 					f.MetaData = scanMetaData(d)
 					f.MetaSkip = len(f.MetaData)
 				} else if len(prevPatch) > 0 {
-					prevPatch[0].Adjust(func(begin, _ int, data []byte) []byte {
+					baseMeta := scanMetaData(d)
+					skipFirst := false
+
+					prevPatch[0].Adjust(func(begin, end int, data []byte) []byte {
+						if n := len(baseMeta); n > 0 && begin >= 2 && end <= n-2 {
+							// A rare case: There is a meta header at the top of the
+							// data of the base revision (already parsed into tmp), but
+							// there's also the first patch that modifies some content of the
+							// meta header. (For a more robust solution the patches
+							// following the first one would need to be checked too
+							// whether they are located within the original meta header.)
+							// An example is:
+							//	hgo revlog $GOROOT/.hg/store/data/test/fixedbugs/bug136.go.i
+							//	file revision 1
+							b := &p.metaBuf
+							b.Reset()
+							b.Write(baseMeta[:begin])
+							b.Write(data)
+							b.Write(baseMeta[end:])
+							f.MetaSkip = n
+							f.MetaData = b.Bytes()
+							skipFirst = true
+							return data[:0]
+						}
+
+						// Another rare case, rsav is an incremental revision, the
+						// meta header is at the top of the first hunk.
+						// Example: hgo revlog -r 1 $PLAN9/.hg/store/data/src/cmd/dd.c.i
 						if begin > 0 {
 							return data
 						}
-
-						// The rare case, rsav is an incremental revision, the
-						// meta header is at the top of the first hunk.
-						// Example: hgo revlog -r 1 $PLAN9/.hg/store/data/src/cmd/dd.c.i
 						f.MetaData = scanMetaData(data)
 						return data[len(f.MetaData):]
 					})
+
+					if skipFirst {
+						prevPatch = prevPatch[1:]
+					}
 				}
 			}
 			f.baseData = d
