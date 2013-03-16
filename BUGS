@@ -1,11 +1,1 @@
-*	The LinkRevSpec lookup algorithm may be wrong in case
-	the number of branches is greater than one:
-	The Go repository contains an example:
-
-		R=$GOROOT
-		hgo cat -R $R -r tip $R/doc/progs/eff_qr.go > /dev/null
-
-	It must be adjusted so that it does not return the wrong
-	filelog record.
-
-*	Packages, esp. revlog, needs documentation.
+*	Packages, esp. revlog, need documentation.

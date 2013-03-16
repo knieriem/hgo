@@ -6,53 +6,13 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/knieriem/hgo/changelog"
 	"github.com/knieriem/hgo/revlog"
 	"github.com/knieriem/hgo/store"
 )
-
-// Lookup the given revision of a file. The Manifest is consulted only
-// if necessary, i.e. if it can''t be told from the filelog whether a file exists yet or not
-func LookupFile(fileLog *revlog.Index, chgId int, manifestEntry func() (*store.ManifestEnt, error)) (r *revlog.Rec, err error) {
-	r, err = revlog.LinkRevSpec(chgId).Lookup(fileLog)
-	if err != nil {
-		return
-	}
-	if r.FileRev() == -1 {
-		err = revlog.ErrRevisionNotFound
-		return
-	}
-
-	if int(r.Linkrev) == chgId {
-		// The requested revision matches this record, which can be
-		// used as a sign that the file is existent yet.
-		return
-	}
-
-	if !r.IsLeaf() {
-		// There are other records that have the current record as a parent.
-		// This means, the file was existent, no need to check the manifest.
-		return
-	}
-
-	// Check for the file's existence using the manifest.
-	ent, err := manifestEntry()
-	if err != nil {
-		return
-	}
-
-	// compare hashes
-	wantId, err := ent.Id()
-	if err != nil {
-		return
-	}
-	if !wantId.Eq(r.Id()) {
-		err = errors.New("manifest node id does not match file id")
-	}
-	return
-}
 
 var cmdCat = &Command{
 	UsageLine: "cat [-R dir] [-r rev] [file]",
@@ -64,6 +24,23 @@ func init() {
 	addStdFlags(cmdCat)
 	addRevFlag(cmdCat)
 	cmdCat.Run = runCat
+}
+
+func findPresentByNodeId(ent *store.ManifestEnt, rlist []*revlog.Rec) (index int, err error) {
+	wantId, err := ent.Id()
+	if err != nil {
+		return
+	}
+
+	for i, r := range rlist {
+		if wantId.Eq(r.Id()) {
+			index = i
+			return
+		}
+	}
+
+	err = fmt.Errorf("internal error: none of the given records matches node id %v", wantId)
+	return
 }
 
 func runCat(cmd *Command, w io.Writer, args []string) {
@@ -89,9 +66,39 @@ func runCat(cmd *Command, w io.Writer, args []string) {
 		}
 	}
 
-	r, err := LookupFile(fileLog, int(localId), func() (*store.ManifestEnt, error) {
-		return ra.manifestEntry(int(localId), fileArg)
-	})
+	link := revlog.NewLinkRevSpec(int(localId))
+	link.FindPresent = func(rlist []*revlog.Rec) (index int, err error) {
+		if len(rlist) > 1 {
+			// Does link.Rev refer to a changelog revision that is a
+			// descendant of one of the revisions in rlist?
+			for i, r := range rlist {
+				cr, err1 := ra.clRec(revlog.FileRevSpec(r.Linkrev))
+				if err1 != nil {
+					err = err1
+					return
+				}
+				if cr.IsDescendant(link.Rev) {
+					index = i
+					goto found
+				}
+			}
+			err = fmt.Errorf("internal error: none of the given records is an ancestor of rev %v", link.Rev)
+			return
+
+		found:
+			if !rlist[index].IsLeaf() {
+				return
+			}
+		}
+
+		// Check for the file's existence using the manifest.
+		ent, err := ra.manifestEntry(link.Rev, fileArg)
+		if err == nil {
+			index, err = findPresentByNodeId(ent, rlist)
+		}
+		return
+	}
+	r, err := link.Lookup(fileLog)
 	if err != nil {
 		fatalf("%s", err)
 	}

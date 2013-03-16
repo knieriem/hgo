@@ -196,8 +196,8 @@ func setupLogTemplate(tpl string, tags map[string][]string) (*template.Template,
 }
 
 func mapLinkrevToFilerevRange(i *revlog.Index, rLo, rHi *revlog.Rec) (r1, r2 *revlog.Rec) {
-	r1 = getRecord(i, revlog.LinkRevSpec(rLo.Linkrev))
-	r2 = getRecord(i, revlog.LinkRevSpec(rHi.Linkrev))
+	r1 = getRecord(i, revlog.NewLinkRevSpec(int(rLo.Linkrev)))
+	r2 = getRecord(i, revlog.NewLinkRevSpec(int(rHi.Linkrev)))
 	if r1.Linkrev < rLo.Linkrev {
 		if r1.Linkrev == r2.Linkrev {
 			goto emptyRange

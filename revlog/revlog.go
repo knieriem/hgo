@@ -385,3 +385,59 @@ func (r *Rec) GetData(dh DataHelper) (data []byte, err error) {
 	}
 	return
 }
+
+// IsDescendant follows all branches that originate in r
+// until it passes record rev2. If that record is found to
+// be on one of these branches, it is a descendant of r.
+func (r *Rec) IsDescendant(rev2 int) (is bool) {
+	// A region refers to a number of adjacent records in the revlog
+	// that all have r as an ancestor.
+	type region struct{ from, to int }
+	var regions []region
+	var cur region
+
+	insideRegion := true
+	cur.from = r.FileRev()
+	index := r.Index.index
+
+	if rev2 >= len(index) {
+		return
+	}
+
+L:
+	for i := cur.from + 1; i <= rev2; i++ {
+		// If parent1 or parent2 are found to point into
+		// one of the regions, i is the index of a descendant
+		// record.
+		p1, p2 := index[i].Parent1, index[i].Parent2
+
+		if insideRegion {
+			if !p1.isNull() && int(p1) >= cur.from {
+				continue
+			}
+			if !p2.isNull() && int(p2) >= cur.from {
+				continue
+			}
+		}
+
+		for _, r := range regions {
+			switch {
+			case !p1.isNull() && r.from <= int(p1) && int(p1) <= r.to:
+				fallthrough
+			case !p2.isNull() && r.from <= int(p2) && int(p2) <= r.to:
+				if !insideRegion {
+					cur.from = i
+					insideRegion = true
+				}
+				continue L
+			}
+		}
+		if insideRegion {
+			insideRegion = false
+			cur.to = i - 1
+			regions = append(regions, cur)
+		}
+	}
+	is = insideRegion
+	return
+}

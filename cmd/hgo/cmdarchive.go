@@ -9,8 +9,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
-	"errors"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -18,6 +16,7 @@ import (
 
 	"github.com/knieriem/hgo/changelog"
 	"github.com/knieriem/hgo/revlog"
+	"github.com/knieriem/hgo/store"
 )
 
 var cmdArchive = &Command{
@@ -61,8 +60,15 @@ func runArchive(cmd *Command, w io.Writer, args []string) {
 	if err != nil {
 		fatalf("%s", err)
 	}
-	link := int(c.Linkrev)
-	mm, err := getManifest(link, c.ManifestNode, b)
+
+	var ent *store.ManifestEnt
+	link := revlog.NewLinkRevSpec(int(c.Linkrev))
+	link.FindPresent = func(rlist []*revlog.Rec) (index int, err error) {
+		index, err = findPresentByNodeId(ent, rlist)
+		return
+	}
+
+	mm, err := getManifest(link.Rev, c.ManifestNode, b)
 	if err != nil {
 		fatalf("%s", err)
 	}
@@ -86,23 +92,15 @@ func runArchive(cmd *Command, w io.Writer, args []string) {
 	pathPfx += "/"
 
 	for i := range mm {
-		ent := &mm[i]
+		ent = &mm[i]
 
 		f, err := st.OpenRevlog(ent.FileName)
 		if err != nil {
 			fatalf("%s", err)
 		}
-		r, err := revlog.LinkRevSpec(link).Lookup(f)
+		r, err := link.Lookup(f)
 		if err != nil {
 			fatalf("%s", err)
-		}
-
-		mId, err := ent.Id()
-		if err != nil {
-			fatalf("%s", err)
-		}
-		if !mId.Eq(r.Id()) {
-			fmt.Fprintf(os.Stderr, "%s %s %s %s", errors.New("manifest id does not match file log record"), mId, r.Id(), ent.FileName)
 		}
 
 		name := pathPfx + ent.FileName
