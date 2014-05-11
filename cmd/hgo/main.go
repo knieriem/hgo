@@ -74,6 +74,7 @@ var commands = []*Command{
 	cmdArchive,
 	cmdRevlog,
 	cmdTags,
+	cmdBranches,
 }
 
 var exitStatus = 0

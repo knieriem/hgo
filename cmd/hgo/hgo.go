@@ -20,6 +20,7 @@ var (
 
 	repo                *hgo.Repository
 	globalTags, allTags *hgo.Tags
+	branchHeads         *hgo.BranchHeads
 )
 
 func addStdFlags(cmd *Command) {
@@ -48,9 +49,16 @@ func openRepository(args []string) {
 		fatalf("%s", err)
 	}
 	repo = r
+
 	globalTags, allTags = repo.Tags()
 	globalTags.Sort()
 	allTags.Sort()
+
+	branchHeads, err = repo.BranchHeads()
+	if err != nil {
+		fatalf("%s", err)
+	}
+
 	return
 }
 
@@ -88,6 +96,8 @@ func parseRevisionSpec(s, dflt string) revlog.RevisionSpec {
 		return revlog.NullRevSpec{}
 	}
 	if id, ok := allTags.IdByName[s]; ok {
+		s = id
+	} else if id, ok := branchHeads.IdByName[s]; ok {
 		s = id
 	} else if i, err := strconv.Atoi(s); err == nil {
 		return revlog.FileRevSpec(i)
