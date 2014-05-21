@@ -39,7 +39,7 @@ func (dest *BranchHeads) copy(src *BranchHeads) {
 func (r *Repository) BranchHeads() (*BranchHeads, error) {
 	bh := newBranchHeads()
 
-	names := []string{"branchheads-served", "branchheads-base"}
+	names := []string{"branchheads-served", "branchheads-base", "branchheads"}
 	for _, name := range names {
 		f, err := r.open(".hg/cache/" + name)
 		if os.IsNotExist(err) {
