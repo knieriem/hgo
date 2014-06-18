@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/knieriem/hgo/store"
+	"github.com/beyang/hgo/store"
 )
 
 // http://mercurial.selenic.com/wiki/FileFormats

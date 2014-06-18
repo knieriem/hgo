@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/knieriem/hgo/revlog"
+	"github.com/beyang/hgo/revlog"
 )
 
 type Store struct {

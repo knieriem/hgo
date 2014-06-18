@@ -9,8 +9,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/knieriem/hgo/changelog"
-	"github.com/knieriem/hgo/revlog"
+	"github.com/beyang/hgo/changelog"
+	"github.com/beyang/hgo/revlog"
 )
 
 var cmdLog = &Command{

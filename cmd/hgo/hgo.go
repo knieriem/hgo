@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/knieriem/hgo"
-	"github.com/knieriem/hgo/revlog"
+	"github.com/beyang/hgo"
+	"github.com/beyang/hgo/revlog"
 )
 
 var (

@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/knieriem/hgo/changelog"
-	"github.com/knieriem/hgo/revlog"
-	"github.com/knieriem/hgo/store"
+	"github.com/beyang/hgo/changelog"
+	"github.com/beyang/hgo/revlog"
+	"github.com/beyang/hgo/store"
 )
 
 var cmdCat = &Command{
