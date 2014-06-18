@@ -4,9 +4,7 @@
 
 package revlog
 
-import (
-	"errors"
-)
+import "errors"
 
 type RevisionSpec interface {
 	Lookup(*Index) (*Rec, error)
@@ -114,13 +112,17 @@ func (l LinkRevSpec) Lookup(i *Index) (match *Rec, err error) {
 
 	// Sort out nil entries.
 	w := 0
+	numNilsBeforeBranch := 0
 	for i := range vr {
 		if vr[i] != nil {
 			vr[w] = vr[i]
 			w++
+		} else if i < branch {
+			numNilsBeforeBranch++
 		}
 	}
 	vr = vr[:w]
+	branch -= numNilsBeforeBranch
 
 	switch len(vr) {
 	case 0:
