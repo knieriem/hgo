@@ -10,7 +10,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/beyang/hgo/revlog/patch"
+	"github.com/knieriem/hgo/revlog/patch"
 )
 
 func (fb *FileBuilder) swap() {

@@ -14,9 +14,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/beyang/hgo/changelog"
-	"github.com/beyang/hgo/revlog"
-	"github.com/beyang/hgo/store"
+	"github.com/knieriem/hgo/changelog"
+	"github.com/knieriem/hgo/revlog"
+	"github.com/knieriem/hgo/store"
 )
 
 var cmdArchive = &Command{
@@ -193,7 +193,7 @@ func (a *tarArchiver) symlink(name, target string, mTime time.Time) (err error) 
 }
 
 func (a *tarArchiver) initHeader(name string, mode int, mTime time.Time) (hdr *tar.Header) {
-	a.h = tar.Header{ /*Uname: "root", Gname: "root"*/}
+	a.h = tar.Header{ /*Uname: "root", Gname: "root"*/ }
 	hdr = &a.h
 	hdr.Name = name
 	hdr.ModTime = mTime

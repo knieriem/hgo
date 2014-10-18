@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/beyang/hgo/revlog"
+	"github.com/knieriem/hgo/revlog"
 )
 
 // http://mercurial.selenic.com/wiki/ChangelogEncodingPlan

@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/beyang/hgo/revlog"
+	"github.com/knieriem/hgo/revlog"
 )
 
 // Tags contains a mapping from tag names to changeset IDs,

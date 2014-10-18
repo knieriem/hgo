@@ -5,8 +5,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/beyang/hgo/revlog"
-	"github.com/beyang/hgo/revlog/patch"
+	"github.com/knieriem/hgo/revlog"
+	"github.com/knieriem/hgo/revlog/patch"
 )
 
 var cmdRevlog = &Command{
